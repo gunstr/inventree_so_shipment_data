@@ -111,7 +111,7 @@ class InvenTreeShipmentData(
         panels = []
 
         # Only display this panel for the 'part' target
-        if context.get("target_model") == "part":
+        if context.get("target_model") == "salesorder":
             panels.append({
                 "key": "inventree-shipment-data-panel",
                 "title": "InvenTree Shipment Data",
