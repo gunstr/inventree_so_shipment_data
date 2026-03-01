@@ -1,23 +1,12 @@
 // Import for type checking
 import {
-  ApiEndpoints,
-  apiUrl,
   checkPluginVersion,
   type InvenTreePluginContext,
   ModelType
 } from '@inventreedb/ui';
-import {
-  Alert,
-  Button,
-  Group,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title
-} from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import { Stack, Table, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 /**
  * Render a custom panel with the provided context.
@@ -29,134 +18,103 @@ function InvenTreeShipmentDataPanel({
 }: {
   context: InvenTreePluginContext;
 }) {
-  // React hooks can be used within plugin components
-  useEffect(() => {
-    console.log('useEffect in plugin component:');
-    console.log('- Model:', context.model);
-    console.log('- ID:', context.id);
+  // Format numeric values to 3 decimal places
+  const formatValue = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return 'n/a';
+    return (value as number).toFixed(3);
+  };
+
+  // for sales order pages we want the order ID
+  const orderId = useMemo(() => {
+    return context.model === ModelType.salesorder ? context.id || null : null;
   }, [context.model, context.id]);
 
-  // Memoize the part ID as passed via the context object
-  const partId = useMemo(() => {
-    return context.model == ModelType.part ? context.id || null : null;
-  }, [context.model, context.id]);
-
-  // Hello world - counter example
-  const [counter, setCounter] = useState<number>(0);
-
-  // Extract context information
-  const instance: string = useMemo(() => {
-    const data = context?.instance ?? {};
-    return JSON.stringify(data, null, 2);
-  }, [context.instance]);
-
-  // Fetch API data from the example API endpoint
-  // It will re-fetch when the partId changes
+  // fetch shipment data only when viewing a sales order
   const apiQuery = useQuery(
     {
-      queryKey: ['apiData', partId],
+      queryKey: ['soShipmentData', orderId],
       queryFn: async () => {
-        const url = `/plugin/inventree-shipment-data/example/`;
-
-        return context.api
-          .get(url)
-          .then((response) => response.data)
-          .catch(() => {});
-      }
+        if (!orderId) {
+          return null;
+        }
+        const url = `/plugin/inventree-shipment-data/salesorder/${orderId}/shipment-data/`;
+        return context.api.get(url).then((response) => response.data);
+      },
+      enabled: !!orderId
     },
     context.queryClient
   );
 
-  // Custom form to edit the selected part
-  const editPartForm = context.forms.edit({
-    url: apiUrl(ApiEndpoints.part_list, partId),
-    title: 'Edit Part',
-    preFormContent: (
-      <Alert title='Custom Plugin Form' color='blue'>
-        This is a custom form launched from within a plugin!
-      </Alert>
-    ),
-    fields: {
-      name: {},
-      description: {},
-      category: {}
-    },
-    successMessage: null,
-    onFormSuccess: () => {
-      notifications.show({
-        title: 'Success',
-        message: 'Part updated successfully!',
-        color: 'green'
-      });
-    }
-  });
-
-  // Custom callback function example
-  const openForm = useCallback(() => {
-    editPartForm?.open();
-  }, [editPartForm]);
-
-  // Navigation functionality example
-  const gotoDashboard = useCallback(() => {
-    context.navigate('/home');
-  }, [context]);
-
   return (
-    <>
-      {editPartForm.modal}
-      <Stack gap='xs'>
-        <Title c={context.theme.primaryColor} order={3}>
-          InvenTree Shipment Data
-        </Title>
-        <Text>
-          This is a custom panel for the InvenTreeShipmentData plugin.
-        </Text>
-        <SimpleGrid cols={2}>
-          <Group justify='apart' wrap='nowrap' gap='sm'>
-            <Button color='blue' onClick={gotoDashboard}>
-              Go to Dashboard
-            </Button>
-            {partId && (
-              <Button color='green' onClick={openForm}>
-                Edit Part
-              </Button>
-            )}
-            <Button onClick={() => setCounter(counter + 1)}>
-              Increment Counter
-            </Button>
-            <Text size='xl'>Counter: {counter}</Text>
-          </Group>
-          {instance ? (
-            <Alert title='Instance Data' color='blue'>
-              {instance}
-            </Alert>
-          ) : (
-            <Alert title='No Instance' color='yellow'>
-              No instance data available
-            </Alert>
-          )}
-          {apiQuery.isFetched && apiQuery.data && (
-            <Alert color='green' title='API Query Data'>
-              {apiQuery.isFetching || apiQuery.isLoading ? (
-                <Text>Loading...</Text>
-              ) : (
-                <Stack gap='xs'>
-                  <Text>Part Count: {apiQuery.data.part_count}</Text>
-                  <Text>Today: {apiQuery.data.today}</Text>
-                  <Text>Random Text: {apiQuery.data.random_text}</Text>
-                  <Button
-                    disabled={apiQuery.isFetching || apiQuery.isLoading}
-                    onClick={() => apiQuery.refetch()}
-                  >
-                    Reload Data
-                  </Button>
-                </Stack>
-              )}
-            </Alert>
-          )}
-        </SimpleGrid>
-      </Stack>
-    </>
+    <Stack gap='xs'>
+      <Title c={context.theme.primaryColor} order={3}>
+        InvenTree Shipment Data
+      </Title>
+      {orderId ? (
+        apiQuery.isLoading ? (
+          <Text>Loading...</Text>
+        ) : apiQuery.data ? (
+          <Stack gap='xs'>
+            <Text>
+              Total Weight: {formatValue(apiQuery.data.total_weight)}{' '}
+              {apiQuery.data.weight_unit}
+            </Text>
+            <Text>
+              Total Volume: {formatValue(apiQuery.data.total_volume)}{' '}
+              {apiQuery.data.volume_unit}
+            </Text>
+            <Table striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Part Name</Table.Th>
+                  <Table.Th ta='right'>Qty</Table.Th>
+                  <Table.Th ta='right'>
+                    Weight/ea{' '}
+                    {apiQuery.data.weight_unit
+                      ? `(${apiQuery.data.weight_unit})`
+                      : ''}
+                  </Table.Th>
+                  <Table.Th ta='right'>
+                    Volume/ea{' '}
+                    {apiQuery.data.volume_unit
+                      ? `(${apiQuery.data.volume_unit})`
+                      : ''}
+                  </Table.Th>
+                  <Table.Th ta='right'>
+                    Line Weight{' '}
+                    {apiQuery.data.weight_unit
+                      ? `(${apiQuery.data.weight_unit})`
+                      : ''}
+                  </Table.Th>
+                  <Table.Th ta='right'>
+                    Line Volume{' '}
+                    {apiQuery.data.volume_unit
+                      ? `(${apiQuery.data.volume_unit})`
+                      : ''}
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {apiQuery.data.parts.map((p: any) => (
+                  <Table.Tr key={p.part_id}>
+                    <Table.Td>{p.part_name ?? '–'}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.quantity)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.weight)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.volume)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.line_weight)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.line_volume)}</Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Stack>
+        ) : (
+          <Text>No shipment data available</Text>
+        )
+      ) : (
+        <Text>This panel is only available on sales order pages.</Text>
+      )}
+    </Stack>
   );
 }
 

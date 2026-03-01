@@ -1,35 +1,6 @@
 import type { InvenTreePluginContext } from '@inventreedb/ui';
-import { Alert, Button, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import { Text } from '@mantine/core';
 
-function PluginSettingsDisplay({
-  context: _context
-}: {
-  context: InvenTreePluginContext;
-}) {
-  return (
-    <Alert color='blue' title='Hello World'>
-      <Text>
-        This is a custom settings page for the InvenTreeShipmentData plugin!
-      </Text>
-      <Text>Custom UI elements can be rendered here</Text>
-      <Button
-        color='blue'
-        onClick={() => {
-          notifications.show({
-            title: 'Hello World',
-            message:
-              'This is a custom notification from the InvenTreeShipmentData plugin!',
-            color: 'blue'
-          });
-        }}
-      >
-        Click Me!
-      </Button>
-    </Alert>
-  );
-}
-
-export function renderPluginSettings(context: InvenTreePluginContext) {
-  return <PluginSettingsDisplay context={context} />;
+export function renderPluginSettings(_context: InvenTreePluginContext) {
+  return <Text>No custom settings for InvenTree Shipment Data.</Text>;
 }

@@ -1,43 +1,25 @@
 """API serializers for the InvenTreeShipmentData plugin.
 
-In practice, you would define your custom serializers here.
-
-Ref: https://www.django-rest-framework.org/api-guide/serializers/
+Only serializers required by the shipment data panel are defined here.
 """
 
 from rest_framework import serializers
 
 
-class ExampleSerializer(serializers.Serializer):
-    """Example serializer for the InvenTreeShipmentData plugin.
+# --- new serializers for sales order shipment data ---
+class PartShipmentSerializer(serializers.Serializer):
+    part_id = serializers.IntegerField(allow_null=True)
+    part_name = serializers.CharField(allow_null=True)
+    quantity = serializers.FloatField()
+    weight = serializers.FloatField(allow_null=True)
+    volume = serializers.FloatField(allow_null=True)
+    line_weight = serializers.FloatField()
+    line_volume = serializers.FloatField()
 
-    This simply demonstrates how to create a serializer,
-    with a few example fields of different types.
-    """
 
-    class Meta:
-        """Meta options for this serializer."""
-
-        fields = [
-            "random_text",
-            "part_count",
-            "today",
-        ]
-
-    random_text = serializers.CharField(
-        max_length=100,
-        required=True,
-        label="Random Text",
-        help_text="A text field containing randomly generated data.",
-    )
-
-    part_count = serializers.IntegerField(
-        label="Number of Parts",
-        help_text="Total number of parts in the InvenTree database.",
-    )
-
-    today = serializers.DateField(
-        required=False,
-        label="Today",
-        help_text="The current date.",
-    )
+class SalesOrderShipmentSerializer(serializers.Serializer):
+    parts = PartShipmentSerializer(many=True)
+    total_weight = serializers.FloatField()
+    total_volume = serializers.FloatField()
+    weight_unit = serializers.CharField(allow_null=True)
+    volume_unit = serializers.CharField(allow_null=True)
