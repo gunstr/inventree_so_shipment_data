@@ -27,7 +27,7 @@ classifiers = [
     "Framework :: InvenTree",
 ]
 [project.urls]
-Homepage = "https://my-project-url.com"
+Homepage = "https://github.com/gunstr/inventree_so_shipment_data"
 
 [project.entry-points."inventree_plugins"]
 InvenTreeShipmentData = "inventree_shipment_data.core:InvenTreeShipmentData"
