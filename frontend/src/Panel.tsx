@@ -41,6 +41,11 @@ function InvenTreeShipmentDataPanel({
     return context.model == ModelType.part ? context.id || null : null;
   }, [context.model, context.id]);
 
+  // for sales order pages we want the order ID
+  const orderId = useMemo(() => {
+    return context.model === ModelType.salesorder ? context.id || null : null;
+  }, [context.model, context.id]);
+
   // Hello world - counter example
   const [counter, setCounter] = useState<number>(0);
 
@@ -50,18 +55,24 @@ function InvenTreeShipmentDataPanel({
     return JSON.stringify(data, null, 2);
   }, [context.instance]);
 
-  // Fetch API data from the example API endpoint
-  // It will re-fetch when the partId changes
+  // Fetch API data from either the example endpoint or the new salesorder endpoint
   const apiQuery = useQuery(
     {
-      queryKey: ['apiData', partId],
+      queryKey: ['soShipmentData', orderId],
       queryFn: async () => {
-        const url = `/plugin/inventree-shipment-data/example/`;
-
-        return context.api
-          .get(url)
-          .then((response) => response.data)
-          .catch(() => {});
+        if (orderId) {
+          const url = `/plugin/inventree-shipment-data/salesorder/${orderId}/shipment-data/`;
+          return context.api
+            .get(url)
+            .then((response) => response.data)
+            .catch(() => {});
+        } else {
+          const url = `/plugin/inventree-shipment-data/example/`;
+          return context.api
+            .get(url)
+            .then((response) => response.data)
+            .catch(() => {});
+        }
       }
     },
     context.queryClient
@@ -136,9 +147,29 @@ function InvenTreeShipmentDataPanel({
             </Alert>
           )}
           {apiQuery.isFetched && apiQuery.data && (
-            <Alert color='green' title='API Query Data'>
+            <Alert
+              color='green'
+              title={orderId ? 'Shipment Data' : 'API Query Data'}
+            >
               {apiQuery.isFetching || apiQuery.isLoading ? (
                 <Text>Loading...</Text>
+              ) : orderId ? (
+                <Stack gap='xs'>
+                  <Text>Total weight: {apiQuery.data.total_weight}</Text>
+                  <Text>Total volume: {apiQuery.data.total_volume}</Text>
+                  <SimpleGrid cols={1}>
+                    {apiQuery.data.parts.map((p: any) => (
+                      <Group key={p.part_id} justify='apart' grow>
+                        <Text>{p.part_name ?? '–'}</Text>
+                        <Text>qty: {p.quantity}</Text>
+                        <Text>wt/ea: {p.weight ?? 'n/a'}</Text>
+                        <Text>vol/ea: {p.volume ?? 'n/a'}</Text>
+                        <Text>line wt: {p.line_weight}</Text>
+                        <Text>line vol: {p.line_volume}</Text>
+                      </Group>
+                    ))}
+                  </SimpleGrid>
+                </Stack>
               ) : (
                 <Stack gap='xs'>
                   <Text>Part Count: {apiQuery.data.part_count}</Text>
