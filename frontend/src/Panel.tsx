@@ -4,7 +4,7 @@ import {
   type InvenTreePluginContext,
   ModelType
 } from '@inventreedb/ui';
-import { Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Stack, Table, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
@@ -18,6 +18,12 @@ function InvenTreeShipmentDataPanel({
 }: {
   context: InvenTreePluginContext;
 }) {
+  // Format numeric values to 3 decimal places
+  const formatValue = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return 'n/a';
+    return (value as number).toFixed(3);
+  };
+
   // for sales order pages we want the order ID
   const orderId = useMemo(() => {
     return context.model === ModelType.salesorder ? context.id || null : null;
@@ -49,20 +55,58 @@ function InvenTreeShipmentDataPanel({
           <Text>Loading...</Text>
         ) : apiQuery.data ? (
           <Stack gap='xs'>
-            <Text>Total weight: {apiQuery.data.total_weight}</Text>
-            <Text>Total volume: {apiQuery.data.total_volume}</Text>
-            <SimpleGrid cols={1}>
-              {apiQuery.data.parts.map((p: any) => (
-                <Group key={p.part_id} justify='apart' grow>
-                  <Text>{p.part_name ?? '–'}</Text>
-                  <Text>qty: {p.quantity}</Text>
-                  <Text>wt/ea: {p.weight ?? 'n/a'}</Text>
-                  <Text>vol/ea: {p.volume ?? 'n/a'}</Text>
-                  <Text>line wt: {p.line_weight}</Text>
-                  <Text>line vol: {p.line_volume}</Text>
-                </Group>
-              ))}
-            </SimpleGrid>
+            <Text>
+              Total Weight: {formatValue(apiQuery.data.total_weight)}{' '}
+              {apiQuery.data.weight_unit}
+            </Text>
+            <Text>
+              Total Volume: {formatValue(apiQuery.data.total_volume)}{' '}
+              {apiQuery.data.volume_unit}
+            </Text>
+            <Table striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Part Name</Table.Th>
+                  <Table.Th ta='right'>Qty</Table.Th>
+                  <Table.Th ta='right'>
+                    Weight/ea{' '}
+                    {apiQuery.data.weight_unit
+                      ? `(${apiQuery.data.weight_unit})`
+                      : ''}
+                  </Table.Th>
+                  <Table.Th ta='right'>
+                    Volume/ea{' '}
+                    {apiQuery.data.volume_unit
+                      ? `(${apiQuery.data.volume_unit})`
+                      : ''}
+                  </Table.Th>
+                  <Table.Th ta='right'>
+                    Line Weight{' '}
+                    {apiQuery.data.weight_unit
+                      ? `(${apiQuery.data.weight_unit})`
+                      : ''}
+                  </Table.Th>
+                  <Table.Th ta='right'>
+                    Line Volume{' '}
+                    {apiQuery.data.volume_unit
+                      ? `(${apiQuery.data.volume_unit})`
+                      : ''}
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {apiQuery.data.parts.map((p: any) => (
+                  <Table.Tr key={p.part_id}>
+                    <Table.Td>{p.part_name ?? '–'}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.quantity)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.weight)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.volume)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.line_weight)}</Table.Td>
+                    <Table.Td ta='right'>{formatValue(p.line_volume)}</Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
           </Stack>
         ) : (
           <Text>No shipment data available</Text>
