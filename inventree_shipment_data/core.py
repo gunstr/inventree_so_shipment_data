@@ -83,8 +83,8 @@ class InvenTreeShipmentData(
         """Add custom context data to a report rendering context."""
 
         # Add shipment data (weight/volume totals and units) for sales order reports
-        from order.models import SalesOrder
-        from .views import calculate_shipment_data
+        from order.models import SalesOrder, SalesOrderShipment
+        from .views import calculate_shipment_data, calculate_shipment_data_for_shipment
 
         if isinstance(model_instance, SalesOrder):
             try:
@@ -96,6 +96,15 @@ class InvenTreeShipmentData(
             except Exception:
                 # If calculation fails, just leave context as-is
                 pass
+        elif isinstance(model_instance, SalesOrderShipment):
+            try:
+                data = calculate_shipment_data_for_shipment(model_instance)
+                context["shipment_total_weight"] = data["total_weight"]
+                context["shipment_total_volume"] = data["total_volume"]
+                context["shipment_weight_unit"] = data["weight_unit"]
+                context["shipment_volume_unit"] = data["volume_unit"]
+            except Exception:
+                pass
 
     def report_callback(self, template, instance, report, request, **kwargs):
         """Callback function called after a report is generated."""
@@ -106,13 +115,18 @@ class InvenTreeShipmentData(
     def setup_urls(self):
         """Configure custom URL endpoints for this plugin."""
         from django.urls import path
-        from .views import SalesOrderShipmentView
+        from .views import SalesOrderShipmentView, ShipmentShipmentView
 
         return [
             path(
                 "salesorder/<int:pk>/shipment-data/",
                 SalesOrderShipmentView.as_view(),
                 name="so-shipment-data",
+            ),
+            path(
+                "shipment/<int:pk>/shipment-data/",
+                ShipmentShipmentView.as_view(),
+                name="shipment-shipment-data",
             ),
         ]
 
@@ -125,20 +139,19 @@ class InvenTreeShipmentData(
 
         panels = []
 
-        # Only display this panel for the 'part' target
-        if context.get("target_model") == "salesorder":
+        # Display this panel for either sales orders or individual shipments
+        if context.get("target_model") in ["salesorder", "salesordershipment"]:
             panels.append({
                 "key": "inventree-shipment-data-panel",
                 "title": "InvenTree Shipment Data",
-                "description": "Custom panel description",
-                "icon": "ti:mood-smile:outline",
+                "description": "Displays weight/volume info for orders or shipments",
+                "icon": "ti:truck",
                 "source": self.plugin_static_file(
                     "Panel.js:renderInvenTreeShipmentDataPanel"
                 ),
                 "context": {
-                    # Provide additional context data to the panel
                     "settings": self.get_settings_dict(),
-                    "foo": "bar",
+                    # additional context could be added here if needed
                 },
             })
 
