@@ -29,18 +29,34 @@ function InvenTreeShipmentDataPanel({
     return context.model === ModelType.salesorder ? context.id || null : null;
   }, [context.model, context.id]);
 
-  // fetch shipment data only when viewing a sales order
+  // for individual shipment pages we want the shipment ID
+  const shipmentId = useMemo(() => {
+    return context.model === ModelType.salesordershipment
+      ? context.id || null
+      : null;
+  }, [context.model, context.id]);
+
+  // labels that depend on whether we're viewing a shipment or the whole order
+  const shipmentLabel = shipmentId ? ' (shipment)' : '';
+  const weightLabel = `Total Weight${shipmentLabel}:`;
+  const volumeLabel = `Total Volume${shipmentLabel}:`;
+
+  // fetch shipment data for either the order or a specific shipment
   const apiQuery = useQuery(
     {
-      queryKey: ['soShipmentData', orderId],
+      queryKey: ['soShipmentData', orderId, shipmentId],
       queryFn: async () => {
-        if (!orderId) {
-          return null;
+        if (shipmentId) {
+          const url = `/plugin/inventree-shipment-data/shipment/${shipmentId}/shipment-data/`;
+          return context.api.get(url).then((response) => response.data);
         }
-        const url = `/plugin/inventree-shipment-data/salesorder/${orderId}/shipment-data/`;
-        return context.api.get(url).then((response) => response.data);
+        if (orderId) {
+          const url = `/plugin/inventree-shipment-data/salesorder/${orderId}/shipment-data/`;
+          return context.api.get(url).then((response) => response.data);
+        }
+        return null;
       },
-      enabled: !!orderId
+      enabled: !!orderId || !!shipmentId
     },
     context.queryClient
   );
@@ -50,17 +66,17 @@ function InvenTreeShipmentDataPanel({
       <Title c={context.theme.primaryColor} order={3}>
         InvenTree Shipment Data
       </Title>
-      {orderId ? (
+      {orderId || shipmentId ? (
         apiQuery.isLoading ? (
           <Text>Loading...</Text>
         ) : apiQuery.data ? (
           <Stack gap='xs'>
             <Text>
-              Total Weight: {formatValue(apiQuery.data.total_weight)}{' '}
+              {weightLabel} {formatValue(apiQuery.data.total_weight)}{' '}
               {apiQuery.data.weight_unit}
             </Text>
             <Text>
-              Total Volume: {formatValue(apiQuery.data.total_volume)}{' '}
+              {volumeLabel} {formatValue(apiQuery.data.total_volume)}{' '}
               {apiQuery.data.volume_unit}
             </Text>
             <Table striped highlightOnHover>
@@ -112,7 +128,9 @@ function InvenTreeShipmentDataPanel({
           <Text>No shipment data available</Text>
         )
       ) : (
-        <Text>This panel is only available on sales order pages.</Text>
+        <Text>
+          This panel is only available on sales order or shipment pages.
+        </Text>
       )}
     </Stack>
   );
