@@ -63,9 +63,7 @@ function InvenTreeShipmentDataPanel({
 
   return (
     <Stack gap='xs'>
-      <Title c={context.theme.primaryColor} order={3}>
-        InvenTree Shipment Data
-      </Title>
+      <Title c={context.theme.primaryColor} order={3}></Title>
       {orderId || shipmentId ? (
         apiQuery.isLoading ? (
           <Text>Loading...</Text>

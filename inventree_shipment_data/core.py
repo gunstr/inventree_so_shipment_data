@@ -143,7 +143,7 @@ class InvenTreeShipmentData(
         if context.get("target_model") in ["salesorder", "salesordershipment"]:
             panels.append({
                 "key": "inventree-shipment-data-panel",
-                "title": "InvenTree Shipment Data",
+                "title": "Shipment Data",
                 "description": "Displays weight/volume info for orders or shipments",
                 "icon": "ti:truck",
                 "source": self.plugin_static_file(
