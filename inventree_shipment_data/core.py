@@ -94,11 +94,9 @@ class InvenTreeShipmentData(
     def setup_urls(self):
         """Configure custom URL endpoints for this plugin."""
         from django.urls import path
-        from .views import ExampleView, SalesOrderShipmentView
+        from .views import SalesOrderShipmentView
 
         return [
-            # Provide path to a simple custom view - replace this with your own views
-            path("example/", ExampleView.as_view(), name="example-view"),
             path(
                 "salesorder/<int:pk>/shipment-data/",
                 SalesOrderShipmentView.as_view(),
