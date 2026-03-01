@@ -82,8 +82,20 @@ class InvenTreeShipmentData(
     ):
         """Add custom context data to a report rendering context."""
 
-        # Add custom context data to the report rendering context
-        context["foo"] = "report_bar"
+        # Add shipment data (weight/volume totals and units) for sales order reports
+        from order.models import SalesOrder
+        from .views import calculate_shipment_data
+
+        if isinstance(model_instance, SalesOrder):
+            try:
+                data = calculate_shipment_data(model_instance)
+                context["shipment_total_weight"] = data["total_weight"]
+                context["shipment_total_volume"] = data["total_volume"]
+                context["shipment_weight_unit"] = data["weight_unit"]
+                context["shipment_volume_unit"] = data["volume_unit"]
+            except Exception:
+                # If calculation fails, just leave context as-is
+                pass
 
     def report_callback(self, template, instance, report, request, **kwargs):
         """Callback function called after a report is generated."""

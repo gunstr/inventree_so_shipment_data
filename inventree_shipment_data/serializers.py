@@ -21,3 +21,5 @@ class SalesOrderShipmentSerializer(serializers.Serializer):
     parts = PartShipmentSerializer(many=True)
     total_weight = serializers.FloatField()
     total_volume = serializers.FloatField()
+    weight_unit = serializers.CharField(allow_null=True)
+    volume_unit = serializers.CharField(allow_null=True)
