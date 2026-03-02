@@ -15,7 +15,9 @@ There is currenly no validation of units why it's important to freeze the unit i
 Open the Plugin Manager and add this plugin with the following setting:
 
 Package Name: `inventree_shipment_data`
+
 Source URL: `git+https://github.com/gunstr/inventree_so_shipment_data.git`
+
 Version: Select the version to install
 
 Enable `Confirm plugin installation` and click Install
