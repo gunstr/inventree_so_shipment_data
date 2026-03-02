@@ -1,0 +1,14 @@
+{
+  "src/Panel.tsx": {
+    "file": "Panel.js",
+    "name": "Panel",
+    "src": "src/Panel.tsx",
+    "isEntry": true
+  },
+  "src/Settings.tsx": {
+    "file": "Settings.js",
+    "name": "Settings",
+    "src": "src/Settings.tsx",
+    "isEntry": true
+  }
+}
