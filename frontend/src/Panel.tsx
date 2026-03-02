@@ -18,10 +18,13 @@ function InvenTreeShipmentDataPanel({
 }: {
   context: InvenTreePluginContext;
 }) {
-  // Format numeric values to 3 decimal places
+  // Format numeric values to 3 decimal places with thousand separators
   const formatValue = (value: number | null | undefined) => {
     if (value === null || value === undefined) return 'n/a';
-    return (value as number).toFixed(3);
+    return (value as number).toLocaleString('en-US', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    });
   };
 
   // for sales order pages we want the order ID
